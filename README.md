@@ -80,6 +80,7 @@ docker-compose up -d --build
 - Copy `.env.production.example` to a real env file on VPS and set strong secrets.
 - Nginx routing snippet is provided at `deploy/nginx/trade-order-bridge.conf`.
 - Keep `/trade-order-bridge/` behind Authelia and expose `/webhooks/tradingview/ibkr` without interactive auth.
+- Headless IB Gateway docker stack templates are in `deploy/ib-gateway/`.
 
 ## Safe real-order smoke sequence
 

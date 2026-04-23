@@ -6,3 +6,6 @@ __pycache__/
 *.log
 *.egg-info/
 .pytest_cache/
+.env
+.env.production
+deploy/ib-gateway/.env
