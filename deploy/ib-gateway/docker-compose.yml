@@ -8,6 +8,8 @@ services:
     environment:
       TWS_SETTINGS_PATH: /home/ibgateway/tws_settings
       TZ: ${TIME_ZONE:-Etc/UTC}
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     volumes:
       - ./data:/home/ibgateway/tws_settings
     ports:
