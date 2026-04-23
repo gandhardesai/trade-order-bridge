@@ -8,7 +8,7 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY trade_order_bridge ./trade_order_bridge
 
-RUN pip install --no-cache-dir -U pip setuptools wheel && pip install --no-cache-dir .
+RUN pip install --no-cache-dir -U pip setuptools wheel && pip install --no-cache-dir ".[ibkr]"
 
 EXPOSE 8000
 
