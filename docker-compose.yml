@@ -1,0 +1,25 @@
+services:
+  trade-order-bridge:
+    build: .
+    container_name: trade-order-bridge
+    restart: unless-stopped
+    environment:
+      APP_NAME: trade-order-bridge
+      DATABASE_URL: sqlite:////data/trade_order_bridge.db
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me-admin-token}
+      KEY_HASH_ITERATIONS: ${KEY_HASH_ITERATIONS:-120000}
+      BROKER_ADAPTER: ${BROKER_ADAPTER:-stub}
+      IBKR_HOST: ${IBKR_HOST:-127.0.0.1}
+      IBKR_PORT: ${IBKR_PORT:-7497}
+      IBKR_CLIENT_ID: ${IBKR_CLIENT_ID:-23}
+      IBKR_ACCOUNT: ${IBKR_ACCOUNT:-}
+    volumes:
+      - ./data:/data
+    ports:
+      - "8000:8000"
+    labels:
+      - "portal.enabled=true"
+      - "portal.id=trade-order-bridge"
+      - "portal.name=Trade Order Bridge"
+      - "portal.description=Automated trade order routing service"
+      - "portal.path=/trade-order-bridge/"
