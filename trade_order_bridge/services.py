@@ -118,3 +118,14 @@ def order_or_404(db: Session, order_id: str) -> models.Order:
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     return order
+
+
+def add_admin_audit_log(db: Session, actor: str, action: str, target: str, details: str = "") -> None:
+    db.add(
+        models.AdminAuditLog(
+            actor=actor,
+            action=action,
+            target=target,
+            details=details,
+        )
+    )

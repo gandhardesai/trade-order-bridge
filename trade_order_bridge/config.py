@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./trade_order_bridge.db"
     admin_token: str = "change-me-admin-token"
     key_hash_iterations: int = 120000
+    log_level: str = "INFO"
+    webhook_rate_limit_count: int = 30
+    webhook_rate_limit_window_sec: int = 60
     broker_adapter: str = "stub"
     ibkr_host: str = "127.0.0.1"
     ibkr_port: int = 7497

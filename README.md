@@ -10,6 +10,10 @@ POC webhook service for receiving TradingView alerts and routing normalized orde
 - Safety controls: `execution_enabled`, `transmit_enabled`, `execution_mode`
 - Admin key rotation + settings endpoints
 - Async in-process execution worker with IBKR stub adapter
+- Request-level logging with `X-Request-ID` correlation
+- In-memory webhook rate limiting (`WEBHOOK_RATE_LIMIT_COUNT` / `WEBHOOK_RATE_LIMIT_WINDOW_SEC`)
+- Admin audit trail endpoint: `GET /admin/audit-logs`
+- Broker connectivity probe endpoint: `GET /admin/broker/health`
 
 ## Run locally
 
@@ -70,3 +74,20 @@ docker-compose up -d --build
 ```
 
 - Service includes Portal labels with generic description and app id `trade-order-bridge`.
+
+## Production templates
+
+- Copy `.env.production.example` to a real env file on VPS and set strong secrets.
+- Nginx routing snippet is provided at `deploy/nginx/trade-order-bridge.conf`.
+- Keep `/trade-order-bridge/` behind Authelia and expose `/webhooks/tradingview/ibkr` without interactive auth.
+
+## Safe real-order smoke sequence
+
+1. Set strict controls in `/admin/settings`:
+   - `execution_mode=live`
+   - `transmit_enabled=false`
+   - restrictive `symbol_allowlist`, low `max_quantity` and `max_notional`
+2. Verify broker connectivity via `GET /admin/broker/health`.
+3. Send one test webhook limit order and verify order lifecycle and broker submission logs.
+4. Flip `transmit_enabled=true` only for one tiny controlled order.
+5. After confirmation, immediately decide whether to keep transmit enabled or revert to `false`.

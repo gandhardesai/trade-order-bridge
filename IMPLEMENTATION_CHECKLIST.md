@@ -15,6 +15,8 @@
 - [x] Add webhook key create/disable/rotate endpoints
 - [x] Add order query endpoints and event history
 - [x] Add dashboard summary endpoint
+- [x] Add admin audit logs endpoint
+- [x] Add broker connectivity health endpoint
 
 ## Milestone 3 - Production readiness follow-ups
 
@@ -23,8 +25,9 @@
 - [x] Add optional live IBKR adapter path (`BROKER_ADAPTER=ibkr_live`) for buy/sell submit
 - [x] Add initial live IBKR close/cancel handling (symbol-based)
 - [ ] Expand live IBKR adapter with richer contract resolution (futures/options/forex mapping)
-- [ ] Add robust request logging and redaction policy
+- [x] Add request logging with `X-Request-ID` correlation
+- [x] Add in-memory webhook rate limiting
 - [ ] Add role-based auth for admin UI/API
 - [ ] Add migrations (Alembic) and Postgres deployment profile
-- [ ] Add automated tests for webhook validation and policy enforcement
-- [ ] Add nginx and docker-compose deployment manifests
+- [x] Add automated tests for webhook validation and policy enforcement
+- [x] Add nginx and docker-compose deployment manifests

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -15,8 +16,18 @@ class BrokerSubmitResult:
     message: str
 
 
+@dataclass
+class BrokerHealthResult:
+    ok: bool
+    adapter: str
+    message: str
+
+
 class BrokerAdapter(Protocol):
     def submit_order(self, order: models.Order) -> BrokerSubmitResult:
+        ...
+
+    def health_check(self) -> BrokerHealthResult:
         ...
 
 
@@ -54,9 +65,13 @@ class IbkrStubAdapter:
             message="Order accepted by IBKR stub adapter",
         )
 
+    def health_check(self) -> BrokerHealthResult:
+        return BrokerHealthResult(ok=True, adapter="stub", message="Stub adapter healthy")
+
 
 class IbkrLiveAdapter:
     def submit_order(self, order: models.Order) -> BrokerSubmitResult:
+        _ensure_event_loop()
         try:
             from ib_insync import IB, Contract, LimitOrder, MarketOrder, StopLimitOrder, StopOrder
         except Exception:
@@ -142,6 +157,42 @@ class IbkrLiveAdapter:
         finally:
             if ib.isConnected():
                 ib.disconnect()
+
+    def health_check(self) -> BrokerHealthResult:
+        _ensure_event_loop()
+        try:
+            from ib_insync import IB
+        except Exception:
+            return BrokerHealthResult(
+                ok=False,
+                adapter="ibkr_live",
+                message="ib_insync not installed",
+            )
+
+        ib = IB()
+        try:
+            ib.connect(settings.ibkr_host, settings.ibkr_port, clientId=settings.ibkr_client_id, timeout=5)
+            return BrokerHealthResult(
+                ok=True,
+                adapter="ibkr_live",
+                message=f"Connected to IBKR at {settings.ibkr_host}:{settings.ibkr_port}",
+            )
+        except Exception as exc:
+            return BrokerHealthResult(
+                ok=False,
+                adapter="ibkr_live",
+                message=f"IBKR connection failed: {exc}",
+            )
+        finally:
+            if ib.isConnected():
+                ib.disconnect()
+
+
+def _ensure_event_loop() -> None:
+    try:
+        asyncio.get_event_loop_policy().get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
 
 def _build_contract(contract_type, symbol: str):

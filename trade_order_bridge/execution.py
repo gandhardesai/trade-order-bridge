@@ -14,6 +14,12 @@ def get_broker_adapter(order: models.Order) -> BrokerAdapter:
     return IbkrStubAdapter()
 
 
+def get_default_broker_adapter() -> BrokerAdapter:
+    if settings.broker_adapter.lower() == "ibkr_live":
+        return IbkrLiveAdapter()
+    return IbkrStubAdapter()
+
+
 def process_order_submission(db: Session, order_id: str) -> models.Order | None:
     order = db.get(models.Order, order_id)
     if not order:

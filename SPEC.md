@@ -20,6 +20,7 @@ Build a self-hosted webhook service to replace SignalStack for TradingView-origi
 - `execution_mode`: `safe_test` (default) or `live`
 - Risk controls: symbol allowlist, max quantity, max notional, allowed order types
 - `safe_test` blocks market orders
+- Webhook rate limiting: `WEBHOOK_RATE_LIMIT_COUNT` per `WEBHOOK_RATE_LIMIT_WINDOW_SEC` (in-memory)
 
 ## API summary
 
@@ -29,7 +30,9 @@ Build a self-hosted webhook service to replace SignalStack for TradingView-origi
   - `GET /readyz`
   - `GET /orders`
   - `GET /orders/{order_id}`
+- Responses include `X-Request-ID` for log correlation.
 - Admin (`X-Admin-Token`):
+  - `GET /admin/broker/health`
   - `GET /admin/settings`
   - `PUT /admin/settings`
   - `GET /admin/keys`
@@ -37,6 +40,7 @@ Build a self-hosted webhook service to replace SignalStack for TradingView-origi
   - `POST /admin/keys/{key_id}/disable`
   - `POST /admin/keys/{key_id}/rotate`
   - `POST /admin/orders/{order_id}/process` (manual retry/process trigger)
+  - `GET /admin/audit-logs`
   - `GET /dashboard/summary`
 
 ## Accepted webhook payload
@@ -70,6 +74,7 @@ Optional fields:
 - `orders`
 - `order_events`
 - `broker_submissions`
+- `admin_audit_logs`
 
 ## TradingView template (recommended)
 

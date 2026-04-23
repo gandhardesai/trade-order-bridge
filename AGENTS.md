@@ -18,6 +18,8 @@
 ## High-signal behavior constraints
 
 - Webhook auth for POC uses JSON `auth_key` (not signature).
+- API emits `X-Request-ID`; use it to correlate nginx/app logs during webhook debugging.
+- Webhook ingress has in-memory rate limiting (`WEBHOOK_RATE_LIMIT_COUNT` / `WEBHOOK_RATE_LIMIT_WINDOW_SEC`).
 - Keep `transmit_enabled` as an explicit operator toggle in settings/UI.
 - `execution_mode=safe_test` is expected default and blocks market orders.
 - `queued` orders are auto-processed by worker into `submitted_to_ibkr` then adapter result statuses.
@@ -27,6 +29,8 @@
 
 - Admin routes require `X-Admin-Token` matching `ADMIN_TOKEN`.
 - Key management flow is built into API (`/admin/keys`, disable, rotate); do not store plaintext keys after creation response.
+- Admin actions are recorded in `/admin/audit-logs`.
+- Broker connectivity preflight is available at `/admin/broker/health`.
 
 ## Source-of-truth docs
 

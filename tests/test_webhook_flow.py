@@ -8,13 +8,14 @@ os.environ["ADMIN_TOKEN"] = "test-admin-token"
 from fastapi.testclient import TestClient
 
 from trade_order_bridge.database import Base, engine
-from trade_order_bridge.main import app
+from trade_order_bridge.main import app, webhook_rate_limiter
 
 
 class WebhookFlowTests(unittest.TestCase):
     def setUp(self) -> None:
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
+        webhook_rate_limiter.reset()
         self.client = TestClient(app)
         self.client.get("/healthz")
 
@@ -121,6 +122,90 @@ class WebhookFlowTests(unittest.TestCase):
         response = self.client.post("/webhooks/tradingview/ibkr", json=payload)
         self.assertEqual(response.status_code, 202)
         self.assertTrue(response.json()["transmit"])
+
+    def test_request_id_header_is_present(self) -> None:
+        response = self.client.get("/healthz")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("X-Request-ID", response.headers)
+
+    def test_webhook_rate_limit_returns_429(self) -> None:
+        original_limit = webhook_rate_limiter.limit_count
+        original_window = webhook_rate_limiter.window_sec
+        webhook_rate_limiter.limit_count = 2
+        webhook_rate_limiter.window_sec = 60
+        webhook_rate_limiter.reset()
+
+        try:
+            for index in range(2):
+                response = self.client.post(
+                    "/webhooks/tradingview/ibkr",
+                    json={
+                        "auth_key": self.webhook_key,
+                        "idempotency_key": f"idem-rate-{index}",
+                        "symbol": "AAPL",
+                        "action": "buy",
+                        "quantity": 1,
+                        "quantity_type": "fixed",
+                        "limit_price": 100.0,
+                    },
+                )
+                self.assertEqual(response.status_code, 202)
+
+            blocked = self.client.post(
+                "/webhooks/tradingview/ibkr",
+                json={
+                    "auth_key": self.webhook_key,
+                    "idempotency_key": "idem-rate-blocked",
+                    "symbol": "AAPL",
+                    "action": "buy",
+                    "quantity": 1,
+                    "quantity_type": "fixed",
+                    "limit_price": 100.0,
+                },
+            )
+            self.assertEqual(blocked.status_code, 429)
+        finally:
+            webhook_rate_limiter.limit_count = original_limit
+            webhook_rate_limiter.window_sec = original_window
+            webhook_rate_limiter.reset()
+
+    def test_admin_actions_are_audited(self) -> None:
+        update_response = self.client.put(
+            "/admin/settings",
+            headers={"X-Admin-Token": "test-admin-token"},
+            json={
+                "execution_enabled": True,
+                "transmit_enabled": False,
+                "execution_mode": "safe_test",
+                "allowed_order_types": ["limit", "stop", "stop_limit"],
+                "symbol_allowlist": ["AAPL"],
+                "max_quantity": 50,
+                "max_notional": 50000,
+            },
+        )
+        self.assertEqual(update_response.status_code, 200)
+
+        logs_response = self.client.get(
+            "/admin/audit-logs",
+            headers={"X-Admin-Token": "test-admin-token"},
+        )
+        self.assertEqual(logs_response.status_code, 200)
+        rows = logs_response.json()
+        self.assertGreaterEqual(len(rows), 1)
+        self.assertTrue(any(item["action"] == "settings.update" for item in rows))
+
+    def test_broker_health_endpoint(self) -> None:
+        unauthorized = self.client.get("/admin/broker/health")
+        self.assertEqual(unauthorized.status_code, 401)
+
+        authorized = self.client.get(
+            "/admin/broker/health",
+            headers={"X-Admin-Token": "test-admin-token"},
+        )
+        self.assertEqual(authorized.status_code, 200)
+        body = authorized.json()
+        self.assertIn("ok", body)
+        self.assertIn("adapter", body)
 
 
 if __name__ == "__main__":

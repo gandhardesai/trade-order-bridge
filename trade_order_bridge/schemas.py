@@ -130,3 +130,17 @@ class DashboardSummary(BaseModel):
     queued_orders: int
     rejected_orders: int
     accepted_orders: int
+
+
+class AdminAuditLogResponse(BaseModel):
+    actor: str
+    action: str
+    target: str
+    details: str
+    created_at: datetime
+
+
+class BrokerHealthResponse(BaseModel):
+    ok: bool
+    adapter: str
+    message: str
