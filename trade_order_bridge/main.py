@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi import Request, Response
+from fastapi.responses import HTMLResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -80,6 +81,33 @@ def healthz() -> dict[str, str]:
 def readyz(db: Session = Depends(db_session)) -> dict[str, str]:
     db.execute(text("SELECT 1"))
     return {"status": "ready"}
+
+
+@app.get("/", response_class=HTMLResponse)
+def home() -> str:
+    return """<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+  <title>trade-order-bridge</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif; margin: 2rem; }
+    h1 { margin-bottom: 0.5rem; }
+    ul { line-height: 1.8; }
+    code { background: #f4f4f4; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>trade-order-bridge</h1>
+  <p>Service is running.</p>
+  <ul>
+    <li><a href=\"/healthz\">Health</a> (<code>/healthz</code>)</li>
+    <li><a href=\"/readyz\">Readiness</a> (<code>/readyz</code>)</li>
+    <li><a href=\"/docs\">API Docs</a> (<code>/docs</code>)</li>
+  </ul>
+</body>
+</html>"""
 
 
 @app.post("/webhooks/tradingview/ibkr", response_model=schemas.WebhookAcceptedResponse, status_code=status.HTTP_202_ACCEPTED)
